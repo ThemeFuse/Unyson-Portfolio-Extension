@@ -15,7 +15,7 @@ function _filter_fw_ext_portfolio_the_content( $the_content ) {
 	 */
 	$portfolio = fw()->extensions->get( 'portfolio' );
 
-	return fw_render_view( $portfolio->locate_view_path( 'hook-single' ), array( 'the_content' => $the_content ) );
+	return fw_render_view( $portfolio->locate_view_path( 'content' ), array( 'the_content' => $the_content ) );
 }
 
 /**
