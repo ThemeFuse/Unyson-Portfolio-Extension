@@ -450,7 +450,7 @@ class FW_Extension_Portfolio extends FW_Extension {
 	 * @return string
 	 */
 	public function _get_link() {
-		return 'edit.php?post_type=' . $this->post_type;
+		return self_admin_url('edit.php?post_type=' . $this->post_type);
 	}
 
 	public function get_settings() {
