@@ -284,9 +284,9 @@ class FW_Extension_Portfolio extends FW_Extension {
 				if ( get_the_post_thumbnail( intval( $id ) ) ) {
 					$value = '<a href="' . get_edit_post_link( $id,
 							true ) . '" title="' . esc_attr( __( 'Edit this item', 'fw' ) ) . '">' .
-					         '<img src="' . fw_resize( get_post_thumbnail_id( intval( $id ) ), 150, 100,
+							 '<img src="' . fw_resize( get_post_thumbnail_id( intval( $id ) ), 150, 100,
 							true ) . '" width="150" height="100" >' .
-					         '</a>';
+							 '</a>';
 				} else {
 					$value = '<img src="' . $this->get_declared_URI( '/static/images/no-image.png' ) . '"/>';
 				}
