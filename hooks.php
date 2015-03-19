@@ -33,14 +33,28 @@ function _filter_fw_ext_portfolio_template_include( $template ) {
 	$portfolio = fw()->extensions->get( 'portfolio' );
 
 	if ( is_singular( $portfolio->get_post_type_name() ) ) {
+
+		if ( preg_match( '/single-' . '.*\.php/i', basename( $template ) ) === 1 ) {
+			return $template;
+		}
+
 		if ( $portfolio->locate_view_path( 'single' ) ) {
 			return $portfolio->locate_view_path( 'single' );
 		} else {
 			add_filter( 'the_content', '_filter_fw_ext_portfolio_the_content' );
 		}
 	} else if ( is_tax( $portfolio->get_taxonomy_name() ) && $portfolio->locate_view_path( 'taxonomy' ) ) {
+
+		if ( preg_match( '/taxonomy-' . '.*\.php/i', basename( $template ) ) === 1 ) {
+			return $template;
+		}
+
 		return $portfolio->locate_view_path( 'taxonomy' );
 	} else if ( is_post_type_archive( $portfolio->get_post_type_name() ) && $portfolio->locate_view_path( 'archive' ) ) {
+		if ( preg_match( '/archive-' . '.*\.php/i', basename( $template ) ) === 1 ) {
+			return $template;
+		}
+
 		return $portfolio->locate_view_path( 'archive' );
 	}
 
