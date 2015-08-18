@@ -144,7 +144,7 @@ class FW_Extension_Portfolio extends FW_Extension {
 				'slug' => $this->slug
 			),
 			'menu_position'      => 4,
-			'show_in_nav_menus'  => false,
+			'show_in_nav_menus'  => true,
 			'menu_icon'          => 'dashicons-portfolio',
 			'hierarchical'       => false,
 			'query_var'          => true,
