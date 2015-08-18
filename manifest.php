@@ -10,7 +10,7 @@ $manifest['description'] = __(
 	.' using the built in portfolio pages.',
 	'fw'
 );
-$manifest['version'] = '1.0.2';
+$manifest['version'] = '1.0.3';
 $manifest['display'] = true;
 $manifest['standalone'] = true;
 
