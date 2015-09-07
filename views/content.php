@@ -20,18 +20,18 @@ if ( ! empty( $thumbnails ) ) :
 
 				$image = fw_resize( $thumbnail['attachment_id'], $fw_ext_projects_gallery_image['width'], $fw_ext_projects_gallery_image['height'], $fw_ext_projects_gallery_image['crop'] );
 				?>
-				<img src="<?php echo $image ?>"
+				<img src="<?php echo esc_attr($image) ?>"
 				     class="nivoslider-image"
-				     alt="<?php echo $attachment->post_title ?>"
-				     title="#nivoslider-caption-<?php echo $attachment->ID ?>"
-				     width="<?php echo $fw_ext_projects_gallery_image['width'] ?>"
+				     alt="<?php echo esc_attr($attachment->post_title) ?>"
+				     title="#nivoslider-caption-<?php echo esc_attr($attachment->ID) ?>"
+				     width="<?php echo esc_attr($fw_ext_projects_gallery_image['width']) ?>"
 					/>
 			<?php endforeach ?>
 		</div>
 		<div class="nivo-html-caption">
 			<?php foreach ( $captions as $attachment_id => $post_title ) : ?>
 				<div
-					id="nivoslider-caption-<?php echo $attachment_id ?>"><?php echo $post_title ?></div>
+					id="nivoslider-caption-<?php echo esc_attr($attachment_id) ?>"><?php echo $post_title ?></div>
 			<?php endforeach ?>
 		</div>
 	</section>
