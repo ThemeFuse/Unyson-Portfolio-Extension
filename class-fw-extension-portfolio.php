@@ -279,13 +279,13 @@ class FW_Extension_Portfolio extends FW_Extension {
 	 * @param int $id
 	 */
 	public function _action_admin_manage_custom_column( $column_name, $id ) {
+
 		switch ( $column_name ) {
 			case 'image':
 				if ( get_the_post_thumbnail( intval( $id ) ) ) {
 					$value = '<a href="' . get_edit_post_link( $id,
 							true ) . '" title="' . esc_attr( __( 'Edit this item', 'fw' ) ) . '">' .
-							 '<img src="' . fw_resize( get_post_thumbnail_id( intval( $id ) ), 150, 100,
-							true ) . '" width="150" height="100" >' .
+					         wp_get_attachment_image( get_post_thumbnail_id( intval( $id ) ), array( 150, 100 ), true ).
 							 '</a>';
 				} else {
 					$value = '<img src="' . $this->get_declared_URI( '/static/images/no-image.png' ) . '"/>';
