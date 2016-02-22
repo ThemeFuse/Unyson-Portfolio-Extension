@@ -19,17 +19,26 @@ class FW_Extension_Portfolio extends FW_Extension {
 		add_action( 'init', array( $this, '_action_register_taxonomy' ) );
 
 		if ( is_admin() ) {
+			$this->save_permalink_structure();
 			$this->add_admin_actions();
 			$this->add_admin_filters();
 		}
 	}
 
 	private function define_slugs() {
-		$this->slug          = apply_filters( 'fw_ext_portfolio_post_slug', $this->slug );
-		$this->taxonomy_slug = apply_filters( 'fw_ext_portfolio_taxonomy_slug', $this->taxonomy_slug );
+		$this->slug = apply_filters(
+			'fw_ext_portfolio_post_slug',
+			$this->get_db_data( 'permalinks/post', $this->slug )
+		);
+
+		$this->taxonomy_slug = apply_filters(
+			'fw_ext_portfolio_taxonomy_slug',
+			$this->get_db_data( 'permalinks/taxonomy', $this->taxonomy_slug )
+		);
 	}
 
-	public function add_admin_actions() {
+	private function add_admin_actions() {
+		add_action( 'admin_init', array( $this, '_action_add_permalink_in_settings' ) );
 		add_action( 'admin_menu', array( $this, '_action_admin_rename_projects' ) );
 		add_action( 'restrict_manage_posts', array( $this, '_action_admin_add_portfolio_edit_page_filter' ) );
 		// listing screen
@@ -47,6 +56,66 @@ class FW_Extension_Portfolio extends FW_Extension {
 		add_action( 'admin_enqueue_scripts', array( $this, '_action_admin_add_static' ) );
 
 		add_action( 'admin_head', array( $this, '_action_admin_initial_nav_menu_meta_boxes' ), 999 );
+	}
+
+	private function save_permalink_structure() {
+
+		if ( ! isset( $_POST['permalink_structure'] ) && ! isset( $_POST['category_base'] ) ) {
+			return;
+		}
+
+		$post = FW_Request::POST( 'fw_ext_portfolio_project_slug',
+			apply_filters( 'fw_ext_portfolio_post_slug', $this->slug )
+		);
+
+		$taxonomy = FW_Request::POST( 'fw_ext_portfolio_portfolio_slug',
+			apply_filters( 'fw_ext_portfolio_taxonomy_slug', $this->taxonomy_slug )
+		);
+
+
+		$this->set_db_data( 'permalinks/post', $post );
+		$this->set_db_data( 'permalinks/taxonomy', $taxonomy );
+	}
+
+	/**
+	 * @internal
+	 **/
+	public function _action_add_permalink_in_settings() {
+		add_settings_field(
+			'fw_ext_portfolio_project_slug',
+			__( 'Project base', 'fw' ),
+			array( $this, '_project_slug_input' ),
+			'permalink',
+			'optional'
+		);
+
+		add_settings_field(
+			'fw_ext_portfolio_portfolio_slug',
+			__( 'Portfolio category base', 'fw' ),
+			array( $this, '_portfolio_slug_input' ),
+			'permalink',
+			'optional'
+		);
+	}
+
+	/**
+	 * @internal
+	 */
+	public function _project_slug_input() {
+		?>
+		<input type="text" name="fw_ext_portfolio_project_slug" value="<?php echo $this->slug; ?>">
+		<code>/my-project</code>
+		<?php
+	}
+
+	/**
+	 * @internal
+	 */
+	public function _portfolio_slug_input() {
+		?>
+		<input type="text" name="fw_ext_portfolio_portfolio_slug" value="<?php echo $this->taxonomy_slug; ?>">
+		<code>/my-portfolio</code>
+		<?php
 	}
 
 	public function add_admin_filters() {
