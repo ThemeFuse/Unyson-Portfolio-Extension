@@ -19,24 +19,36 @@ class FW_Extension_Portfolio extends FW_Extension {
 		add_action( 'init', array( $this, '_action_register_taxonomy' ) );
 
 		if ( is_admin() ) {
+			$this->save_permalink_structure();
 			$this->add_admin_actions();
 			$this->add_admin_filters();
 		}
 	}
 
 	private function define_slugs() {
-		$this->slug          = apply_filters( 'fw_ext_portfolio_post_slug', $this->slug );
-		$this->taxonomy_slug = apply_filters( 'fw_ext_portfolio_taxonomy_slug', $this->taxonomy_slug );
+		$this->slug = apply_filters(
+			'fw_ext_portfolio_post_slug',
+			$this->get_db_data( 'permalinks/post', $this->slug )
+		);
+
+		$this->taxonomy_slug = apply_filters(
+			'fw_ext_portfolio_taxonomy_slug',
+			$this->get_db_data( 'permalinks/taxonomy', $this->taxonomy_slug )
+		);
 	}
 
-	public function add_admin_actions() {
+	private function add_admin_actions() {
+		add_action( 'admin_init', array( $this, '_action_add_permalink_in_settings' ) );
 		add_action( 'admin_menu', array( $this, '_action_admin_rename_projects' ) );
 		add_action( 'restrict_manage_posts', array( $this, '_action_admin_add_portfolio_edit_page_filter' ) );
 		// listing screen
-		add_action( 'manage_' . $this->post_type . '_posts_custom_column', array(
-			$this,
-			'_action_admin_manage_custom_column'
-		), 10, 2 );
+		add_action( 'manage_' . $this->post_type . '_posts_custom_column',
+			array(
+				$this,
+				'_action_admin_manage_custom_column'
+			),
+			10,
+			2 );
 
 		// add / edit screen
 		add_action( 'do_meta_boxes', array( $this, '_action_admin_featured_image_label' ) );
@@ -46,13 +58,76 @@ class FW_Extension_Portfolio extends FW_Extension {
 		add_action( 'admin_head', array( $this, '_action_admin_initial_nav_menu_meta_boxes' ), 999 );
 	}
 
+	private function save_permalink_structure() {
+
+		if ( ! isset( $_POST['permalink_structure'] ) && ! isset( $_POST['category_base'] ) ) {
+			return;
+		}
+
+		$post = FW_Request::POST( 'fw_ext_portfolio_project_slug',
+			apply_filters( 'fw_ext_portfolio_post_slug', $this->slug )
+		);
+
+		$taxonomy = FW_Request::POST( 'fw_ext_portfolio_portfolio_slug',
+			apply_filters( 'fw_ext_portfolio_taxonomy_slug', $this->taxonomy_slug )
+		);
+
+
+		$this->set_db_data( 'permalinks/post', $post );
+		$this->set_db_data( 'permalinks/taxonomy', $taxonomy );
+	}
+
+	/**
+	 * @internal
+	 **/
+	public function _action_add_permalink_in_settings() {
+		add_settings_field(
+			'fw_ext_portfolio_project_slug',
+			__( 'Project base', 'fw' ),
+			array( $this, '_project_slug_input' ),
+			'permalink',
+			'optional'
+		);
+
+		add_settings_field(
+			'fw_ext_portfolio_portfolio_slug',
+			__( 'Portfolio category base', 'fw' ),
+			array( $this, '_portfolio_slug_input' ),
+			'permalink',
+			'optional'
+		);
+	}
+
+	/**
+	 * @internal
+	 */
+	public function _project_slug_input() {
+		?>
+		<input type="text" name="fw_ext_portfolio_project_slug" value="<?php echo $this->slug; ?>">
+		<code>/my-project</code>
+		<?php
+	}
+
+	/**
+	 * @internal
+	 */
+	public function _portfolio_slug_input() {
+		?>
+		<input type="text" name="fw_ext_portfolio_portfolio_slug" value="<?php echo $this->taxonomy_slug; ?>">
+		<code>/my-portfolio</code>
+		<?php
+	}
+
 	public function add_admin_filters() {
 		add_filter( 'parse_query', array( $this, '_filter_admin_filter_portfolios_by_portfolio_category' ), 10, 2 );
 		add_filter( 'months_dropdown_results', array( $this, '_filter_admin_remove_select_by_date_filter' ) );
-		add_filter( 'manage_edit-' . $this->post_type . '_columns', array(
-			$this,
-			'_filter_admin_manage_edit_columns'
-		), 10, 1 );
+		add_filter( 'manage_edit-' . $this->post_type . '_columns',
+			array(
+				$this,
+				'_filter_admin_manage_edit_columns'
+			),
+			10,
+			1 );
 
 		if ( $this->get_config( 'has-gallery' ) === true ) {
 			add_filter( 'fw_post_options', array( $this, '_filter_admin_add_post_options' ), 10, 2 );
@@ -111,66 +186,68 @@ class FW_Extension_Portfolio extends FW_Extension {
 	 */
 	public function _action_register_post_type() {
 
-		$post_names = apply_filters( 'fw_ext_projects_post_type_name', array(
-			'singular' => __( 'Project', 'fw' ),
-			'plural'   => __( 'Projects', 'fw' )
-		) );
+		$post_names = apply_filters( 'fw_ext_projects_post_type_name',
+			array(
+				'singular' => __( 'Project', 'fw' ),
+				'plural'   => __( 'Projects', 'fw' )
+			) );
 
-		register_post_type( $this->post_type, array(
-			'labels'             => array(
-				'name'               => $post_names['plural'], //__( 'Portfolio', 'fw' ),
-				'singular_name'      => $post_names['singular'], //__( 'Portfolio project', 'fw' ),
-				'add_new'            => __( 'Add New', 'fw' ),
-				'add_new_item'       => sprintf( __( 'Add New %s', 'fw' ), $post_names['singular'] ),
-				'edit'               => __( 'Edit', 'fw' ),
-				'edit_item'          => sprintf( __( 'Edit %s', 'fw' ), $post_names['singular'] ),
-				'new_item'           => sprintf( __( 'New %s', 'fw' ), $post_names['singular'] ),
-				'all_items'          => sprintf( __( 'All %s', 'fw' ), $post_names['plural'] ),
-				'view'               => sprintf( __( 'View %s', 'fw' ), $post_names['singular'] ),
-				'view_item'          => sprintf( __( 'View %s', 'fw' ), $post_names['singular'] ),
-				'search_items'       => sprintf( __( 'Search %s', 'fw' ), $post_names['plural'] ),
-				'not_found'          => sprintf( __( 'No %s Found', 'fw' ), $post_names['plural'] ),
-				'not_found_in_trash' => sprintf( __( 'No %s Found In Trash', 'fw' ), $post_names['plural'] ),
-				'parent_item_colon'  => '' /* text for parent types */
-			),
-			'description'        => __( 'Create a portfolio item', 'fw' ),
-			'public'             => true,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'publicly_queryable' => true,
-			/* queries can be performed on the front end */
-			'has_archive'        => true,
-			'rewrite'            => array(
-				'slug' => $this->slug
-			),
-			'menu_position'      => 4,
-			'show_in_nav_menus'  => true,
-			'menu_icon'          => 'dashicons-portfolio',
-			'hierarchical'       => false,
-			'query_var'          => true,
-			/* Sets the query_var key for this post type. Default: true - set to $post_type */
-			'supports'           => array(
-				'title', /* Text input field to create a post title. */
-				'editor',
-				'thumbnail', /* Displays a box for featured image. */
-			),
-			'capabilities'       => array(
-				'edit_post'              => 'edit_pages',
-				'read_post'              => 'edit_pages',
-				'delete_post'            => 'edit_pages',
-				'edit_posts'             => 'edit_pages',
-				'edit_others_posts'      => 'edit_pages',
-				'publish_posts'          => 'edit_pages',
-				'read_private_posts'     => 'edit_pages',
-				'read'                   => 'edit_pages',
-				'delete_posts'           => 'edit_pages',
-				'delete_private_posts'   => 'edit_pages',
-				'delete_published_posts' => 'edit_pages',
-				'delete_others_posts'    => 'edit_pages',
-				'edit_private_posts'     => 'edit_pages',
-				'edit_published_posts'   => 'edit_pages',
-			),
-		) );
+		register_post_type( $this->post_type,
+			array(
+				'labels'             => array(
+					'name'               => $post_names['plural'], //__( 'Portfolio', 'fw' ),
+					'singular_name'      => $post_names['singular'], //__( 'Portfolio project', 'fw' ),
+					'add_new'            => __( 'Add New', 'fw' ),
+					'add_new_item'       => sprintf( __( 'Add New %s', 'fw' ), $post_names['singular'] ),
+					'edit'               => __( 'Edit', 'fw' ),
+					'edit_item'          => sprintf( __( 'Edit %s', 'fw' ), $post_names['singular'] ),
+					'new_item'           => sprintf( __( 'New %s', 'fw' ), $post_names['singular'] ),
+					'all_items'          => sprintf( __( 'All %s', 'fw' ), $post_names['plural'] ),
+					'view'               => sprintf( __( 'View %s', 'fw' ), $post_names['singular'] ),
+					'view_item'          => sprintf( __( 'View %s', 'fw' ), $post_names['singular'] ),
+					'search_items'       => sprintf( __( 'Search %s', 'fw' ), $post_names['plural'] ),
+					'not_found'          => sprintf( __( 'No %s Found', 'fw' ), $post_names['plural'] ),
+					'not_found_in_trash' => sprintf( __( 'No %s Found In Trash', 'fw' ), $post_names['plural'] ),
+					'parent_item_colon'  => '' /* text for parent types */
+				),
+				'description'        => __( 'Create a portfolio item', 'fw' ),
+				'public'             => true,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'publicly_queryable' => true,
+				/* queries can be performed on the front end */
+				'has_archive'        => true,
+				'rewrite'            => array(
+					'slug' => $this->slug
+				),
+				'menu_position'      => 4,
+				'show_in_nav_menus'  => true,
+				'menu_icon'          => 'dashicons-portfolio',
+				'hierarchical'       => false,
+				'query_var'          => true,
+				/* Sets the query_var key for this post type. Default: true - set to $post_type */
+				'supports'           => array(
+					'title', /* Text input field to create a post title. */
+					'editor',
+					'thumbnail', /* Displays a box for featured image. */
+				),
+				'capabilities'       => array(
+					'edit_post'              => 'edit_pages',
+					'read_post'              => 'edit_pages',
+					'delete_post'            => 'edit_pages',
+					'edit_posts'             => 'edit_pages',
+					'edit_others_posts'      => 'edit_pages',
+					'publish_posts'          => 'edit_pages',
+					'read_private_posts'     => 'edit_pages',
+					'read'                   => 'edit_pages',
+					'delete_posts'           => 'edit_pages',
+					'delete_private_posts'   => 'edit_pages',
+					'delete_published_posts' => 'edit_pages',
+					'delete_others_posts'    => 'edit_pages',
+					'edit_private_posts'     => 'edit_pages',
+					'edit_published_posts'   => 'edit_pages',
+				),
+			) );
 
 	}
 
@@ -179,10 +256,11 @@ class FW_Extension_Portfolio extends FW_Extension {
 	 */
 	public function _action_register_taxonomy() {
 
-		$category_names = apply_filters( 'fw_ext_portfolio_category_name', array(
-			'singular' => __( 'Category', 'fw' ),
-			'plural'   => __( 'Categories', 'fw' )
-		) );
+		$category_names = apply_filters( 'fw_ext_portfolio_category_name',
+			array(
+				'singular' => __( 'Category', 'fw' ),
+				'plural'   => __( 'Categories', 'fw' )
+			) );
 
 		$labels = array(
 			'name'              => sprintf( _x( 'Portfolio %s', 'taxonomy general name', 'fw' ),
@@ -268,8 +346,13 @@ class FW_Extension_Portfolio extends FW_Extension {
 	 */
 	public function _action_admin_featured_image_label() {
 		remove_meta_box( 'postimagediv', $this->post_type, 'side' );
-		add_meta_box( 'postimagediv', __( 'Project Cover Image', 'fw' ), 'post_thumbnail_meta_box', $this->post_type,
-			'side' );
+		add_meta_box(
+			'postimagediv',
+			__( 'Project Cover Image', 'fw' ),
+			'post_thumbnail_meta_box',
+			$this->post_type,
+			'side'
+		);
 	}
 
 	/**
@@ -285,8 +368,10 @@ class FW_Extension_Portfolio extends FW_Extension {
 				if ( get_the_post_thumbnail( intval( $id ) ) ) {
 					$value = '<a href="' . get_edit_post_link( $id,
 							true ) . '" title="' . esc_attr( __( 'Edit this item', 'fw' ) ) . '">' .
-					         wp_get_attachment_image( get_post_thumbnail_id( intval( $id ) ), array( 150, 100 ), true ).
-							 '</a>';
+					         wp_get_attachment_image( get_post_thumbnail_id( intval( $id ) ),
+						         array( 150, 100 ),
+						         true ) .
+					         '</a>';
 				} else {
 					$value = '<img src="' . $this->get_declared_URI( '/static/images/no-image.png' ) . '"/>';
 				}
@@ -411,13 +496,14 @@ class FW_Extension_Portfolio extends FW_Extension {
 
 		$filter_value = (int) $filter_value;
 
-		$query->set( 'tax_query', array(
+		$query->set( 'tax_query',
 			array(
-				'taxonomy' => $this->taxonomy_name,
-				'field'    => 'id',
-				'terms'    => $filter_value,
-			)
-		) );
+				array(
+					'taxonomy' => $this->taxonomy_name,
+					'field'    => 'id',
+					'terms'    => $filter_value,
+				)
+			) );
 
 		return $query;
 	}
@@ -450,7 +536,7 @@ class FW_Extension_Portfolio extends FW_Extension {
 	 * @return string
 	 */
 	public function _get_link() {
-		return self_admin_url('edit.php?post_type=' . $this->post_type);
+		return self_admin_url( 'edit.php?post_type=' . $this->post_type );
 	}
 
 	public function get_settings() {
