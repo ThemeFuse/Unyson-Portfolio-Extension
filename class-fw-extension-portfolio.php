@@ -247,7 +247,6 @@ class FW_Extension_Portfolio extends FW_Extension {
 					'edit_private_posts'     => 'edit_pages',
 					'edit_published_posts'   => 'edit_pages',
 				),
-				'taxonomies' => apply_filters('fw:ext:portfolio:enable-post-tags', false) ? array('post_tag') : array(),
 			) );
 
 	}
