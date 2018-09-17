@@ -194,6 +194,16 @@ class FW_Extension_Portfolio extends FW_Extension {
 				'plural'   => __( 'Projects', 'fw' )
 			) );
 
+		$supports = apply_filters(
+			'fw_ext_projects_feature_supports',
+			array(
+				'title', /* Text input field to create a post title. */
+				'editor',
+				'thumbnail', /* Displays a box for featured image. */
+				'revisions'
+			)
+		);
+
 		register_post_type( $this->post_type,
 			array(
 				'labels'             => array(
@@ -228,12 +238,7 @@ class FW_Extension_Portfolio extends FW_Extension {
 				'hierarchical'       => false,
 				'query_var'          => true,
 				/* Sets the query_var key for this post type. Default: true - set to $post_type */
-				'supports'           => array(
-					'title', /* Text input field to create a post title. */
-					'editor',
-					'thumbnail', /* Displays a box for featured image. */
-                    'revisions'
-				),
+				'supports'           => $supports,
 				'capabilities'       => array(
 					'edit_post'              => 'edit_pages',
 					'read_post'              => 'edit_pages',
