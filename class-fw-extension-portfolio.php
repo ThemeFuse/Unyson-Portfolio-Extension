@@ -237,6 +237,7 @@ class FW_Extension_Portfolio extends FW_Extension {
 				'menu_icon'          => 'dashicons-portfolio',
 				'hierarchical'       => false,
 				'query_var'          => true,
+				'show_in_rest' => true,
 				/* Sets the query_var key for this post type. Default: true - set to $post_type */
 				'supports'           => $supports,
 				'capabilities'       => array(
